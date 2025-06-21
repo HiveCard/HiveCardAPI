@@ -1,0 +1,15 @@
+﻿namespace HiveCardAPI.Models
+{
+    public class PdfFile
+    {
+        public int Id { get; set; }
+        public int UserId { get; set; }
+        public int StatementId { get; set; }
+        public string FileName { get; set; }
+        public string FileUrl { get; set; }
+        public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
+
+        public User User { get; set; }
+        public Statement Statement { get; set; }
+    }
+}

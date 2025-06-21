@@ -1,0 +1,6 @@
+@HiveCardAPI_HostAddress = http://localhost:5122
+
+GET {{HiveCardAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
