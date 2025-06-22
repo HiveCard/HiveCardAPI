@@ -6,6 +6,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HiveCardAPI.Controllers
 {
+    public class LoginRequest
+    {
+        public string Email { get; set; }
+        public string Password { get; set; }
+    }
+
     [ApiController]
     [Route("api/[controller]")]
     public class UsersController : ControllerBase
@@ -61,5 +67,28 @@ namespace HiveCardAPI.Controllers
             var exists = await _db.Users.AnyAsync(u => u.Email == email);
             return Ok(new { exists });
         }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
+                return BadRequest(new { error = "Email and password are required." });
+
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+
+            if (user == null)
+                return Unauthorized(new { error = "User not found." });
+
+            if (user.Password != request.Password)
+                return Unauthorized(new { error = "Invalid password." });
+
+            return Ok(new
+            {
+                userId = user.Id,
+                email = user.Email,
+                fullName = user.Name
+            });
+        }
+
     }
 }
