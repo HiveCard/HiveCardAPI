@@ -37,14 +37,27 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+//TODO SET DEBUGGING MODE ALWAYS FOR NOW
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-//app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+//if (app.Environment.IsDevelopment())
+//{
+//    app.UseSwagger();
+//   app.UseSwaggerUI();
+//}
+
+app.UseRouting();
+
 app.UseCors("AllowAll");
+
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "HiveCard API V1");
+    c.RoutePrefix = "swagger"; // required to load at /swagger
+});
+
+//app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+
 //app.UseHttpsRedirection();
 
 app.UseAuthorization();
