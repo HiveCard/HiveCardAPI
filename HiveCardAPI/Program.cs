@@ -1,8 +1,12 @@
-using HiveCardAPI.Data;
+﻿using HiveCardAPI.Data;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.ListenAnyIP(5000); // 👈 Required for EB to reverse proxy correctly
+});
 // Add services to the container.
 
 var dbHost = Environment.GetEnvironmentVariable("DB_HOST") ?? "hivecard-db.cqxa6u088i5p.us-east-1.rds.amazonaws.com";
