@@ -1,4 +1,6 @@
-﻿namespace HiveCardAPI.Models
+﻿using System.Text.Json.Serialization;
+
+namespace HiveCardAPI.Models
 {
     public class PdfFile
     {
@@ -9,7 +11,9 @@
         public string FileUrl { get; set; }
         public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
 
+        [JsonIgnore]
         public User User { get; set; }
+        [JsonIgnore]
         public Statement Statement { get; set; }
     }
 }
