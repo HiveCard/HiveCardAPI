@@ -4,6 +4,8 @@ using HiveCardAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
+using System.Globalization;
+
 
 namespace HiveCardAPI.Controllers
 {
@@ -15,38 +17,40 @@ namespace HiveCardAPI.Controllers
         private readonly AppDbContext _db;
         public StatementsController(AppDbContext db) => _db = db;
 
-        [HttpPost]
-        public async Task<IActionResult> Upload([FromBody] UploadStatementDto dto)
+        [HttpGet("card/{creditCardId}/latest")]
+        public async Task<IActionResult> GetLatestStatement([FromRoute] string creditCardId)
         {
-            var user = await _db.Users.FindAsync(dto.UserId);
-            var card = await _db.CreditCards
-                .Include(c => c.Product)
-                .FirstOrDefaultAsync(c => c.Id == dto.CreditCardId && c.UserId == dto.UserId);
+            if (string.IsNullOrWhiteSpace(creditCardId))
+                return BadRequest("CreditCardId cannot be empty.");
 
-            if (user == null || card == null)
-                return BadRequest("Invalid user or credit card.");
+            var statements = await _db.Statements
+                .Where(s => s.CreditCardId == creditCardId)
+                .AsNoTracking()
+                .ToListAsync();
 
-            var statement = new Statement
-            {
-                CreditCardId = card.Id,
-                StatementMonth = dto.StatementMonth,
-                PaymentDueDate = dto.PaymentDueDate,
-                TotalAmountDue = dto.TotalAmountDue,
-                MinimumAmountDue = dto.MinimumAmountDue,
-                TransactionDetails = dto.Activities.Select(a => new TransactionDetails
+            if (!statements.Any())
+                return NotFound($"No statements found for CreditCardId '{creditCardId}'.");
+
+            // Parse the StatementMonth strings to DateTime for comparison
+            var latest = statements
+                .Select(s => new
                 {
-                    TransactionDate = a.TransactionDate,
-                    PostDate = a.PostDate,
-                    Description = a.Description,
-                    Amount = a.Amount,
-                    RawAmount = a.RawAmount
-                }).ToList()
-            };
+                    Statement = s,
+                    ParsedDate = DateTime.TryParseExact(
+                        s.StatementMonth,
+                        "dd-MMM-yy",
+                        CultureInfo.InvariantCulture,
+                        DateTimeStyles.None,
+                        out var parsed) ? parsed : DateTime.MinValue
+                })
+                .OrderByDescending(x => x.ParsedDate)
+                .FirstOrDefault();
 
-            _db.Statements.Add(statement);
-            await _db.SaveChangesAsync();
+            if (latest == null || latest.ParsedDate == DateTime.MinValue)
+                return NotFound($"No valid StatementMonth format for CreditCardId '{creditCardId}'.");
 
-            return Ok(new { message = "Statement uploaded", statementId = statement.Id });
+            return Ok(latest.Statement);
         }
+
     }
 }

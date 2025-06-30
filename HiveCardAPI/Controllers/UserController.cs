@@ -56,6 +56,22 @@ namespace HiveCardAPI.Controllers
             return Ok(new { message = "User created successfully", userId = user.Id });
         }
 
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteUser(int id)
+        {
+            var user = await _db.Users.FindAsync(id);
+
+            if (user == null)
+            {
+                return NotFound($"User with ID {id} not found.");
+            }
+
+            _db.Users.Remove(user);
+            await _db.SaveChangesAsync();
+
+            return Ok($"User with ID {id} has been deleted.");
+        }
+
         [HttpGet("all")]
         public async Task<IActionResult> GetAllUsers()
         {

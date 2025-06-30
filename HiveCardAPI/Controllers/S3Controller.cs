@@ -18,35 +18,35 @@ namespace HiveCardAPI.Controllers
             _config = config;
         }
 
-        [HttpPost("presign")]
-        public IActionResult GetPreSignedUrl([FromQuery] string fileName, [FromQuery] int userId)
-        {
-            var bucket = _config["S3:Bucket"];
-            var region = RegionEndpoint.GetBySystemName(_config["S3:Region"]);
-            var key = $"uploads/{userId}/{fileName}";
+        //[HttpPost("presign")]
+        //public IActionResult GetPreSignedUrl([FromQuery] string fileName, [FromQuery] int userId)
+        //{
+        //    var bucket = _config["S3:Bucket"];
+        //    var region = RegionEndpoint.GetBySystemName(_config["S3:Region"]);
+        //    var key = $"uploads/{userId}/{fileName}";
 
-            var credentials = new BasicAWSCredentials(
-                _config["S3:AccessKey"],
-                _config["S3:SecretKey"]);
+        //    var credentials = new BasicAWSCredentials(
+        //        _config["S3:AccessKey"],
+        //        _config["S3:SecretKey"]);
 
-            using var client = new AmazonS3Client(credentials, region);
+        //    using var client = new AmazonS3Client(credentials, region);
 
-            var request = new GetPreSignedUrlRequest
-            {
-                BucketName = bucket,
-                Key = key,
-                Verb = HttpVerb.PUT,
-                Expires = DateTime.UtcNow.AddMinutes(15),
-                ContentType = "application/pdf"
-            };
+        //    var request = new GetPreSignedUrlRequest
+        //    {
+        //        BucketName = bucket,
+        //        Key = key,
+        //        Verb = HttpVerb.PUT,
+        //        Expires = DateTime.UtcNow.AddMinutes(15),
+        //        ContentType = "application/pdf"
+        //    };
 
-            var url = client.GetPreSignedURL(request);
+        //    var url = client.GetPreSignedURL(request);
 
-            return Ok(new
-            {
-                uploadUrl = url,
-                fileKey = key
-            });
-        }
+        //    return Ok(new
+        //    {
+        //        uploadUrl = url,
+        //        fileKey = key
+        //    });
+        //}
     }
 }

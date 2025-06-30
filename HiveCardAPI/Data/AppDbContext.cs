@@ -16,5 +16,18 @@ namespace HiveCardAPI.Data
         public DbSet<Statement> Statements { get; set; }
         public DbSet<TransactionDetails> TransactionDetail { get; set; }
         public DbSet<PdfFile> PdfFiles { get; set; }
+
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // Correct FK → non-PK unique join:
+            modelBuilder.Entity<Statement>()
+                .HasOne(s => s.CreditCard)
+                .WithMany(c => c.Statements)
+                .HasPrincipalKey(c => c.CardNumber)      // Use CardNumber as the principal key
+                .HasForeignKey(s => s.CreditCardId);     // This is the FK in Statements
+        }
     }
 }
