@@ -35,12 +35,36 @@ namespace HiveCardAPI.Controllers
                 new { message = "Bank created successfully", bank });
         }
 
+        //[HttpGet]
+        //public async Task<IActionResult> GetAllBanks()
+        //{
+        //    var banks = await _db.Banks.ToListAsync();
+        //    return Ok(banks);
+        //}
+
         [HttpGet]
         public async Task<IActionResult> GetAllBanks()
         {
-            var banks = await _db.Banks.ToListAsync();
+            var banks = await _db.Banks
+                .Include(b => b.CreditCardProducts)
+                .Select(b => new BankDto
+                {
+                    Id = b.Id,
+                    Name = b.Name,
+                    Code = b.Code,
+                    CreditCardProducts = b.CreditCardProducts.Select(p => new CreditCardProductDto
+                    {
+                        Id = p.Id,
+                        Name = p.Name,
+                        Description = p.Description,
+                        CardType = p.CardType
+                    }).ToList()
+                })
+                .ToListAsync();
+
             return Ok(banks);
         }
+
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetBankById(int id)
