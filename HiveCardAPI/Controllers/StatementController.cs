@@ -38,7 +38,7 @@ namespace HiveCardAPI.Controllers
                     Statement = s,
                     ParsedDate = DateTime.TryParseExact(
                         s.StatementMonth,
-                        "dd-MMM-yy",
+                        new[] { "dd-MMM-yy", "dd MMMM yyyy", "yyyy-MM-dd" },
                         CultureInfo.InvariantCulture,
                         DateTimeStyles.None,
                         out var parsed) ? parsed : DateTime.MinValue
