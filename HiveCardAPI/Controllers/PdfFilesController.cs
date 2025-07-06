@@ -73,6 +73,46 @@ namespace HiveCardAPI.Controllers
             };
 
             _db.PdfFiles.Add(pdfFile);
+
+
+          
+            var name = Path.GetFileNameWithoutExtension(request.FileName); // BPI_CLASSIC_1234_2025_01_02
+            var parts = name.Split('_');
+
+            if (parts.Length < 4)
+                throw new Exception("Filename format invalid. Expected BANK_TYPE_USERID_YYYY-MM-DD.pdf");
+
+            string bank = parts[0];
+            string type = parts[1];
+            int userId = int.Parse(parts[2]);
+            DateTime date = DateTime.Parse(parts[3]);
+
+
+
+
+            // ✅ Insert placeholder if not already there
+            var placeholderCardNumber = $"{bank} {type}";
+            var placeholderNickname = "extracting text (10+ mins)";
+
+            var exists = await _db.CreditCards
+                .AnyAsync(cc => cc.UserId == request.UserId && cc.CardNumber == placeholderCardNumber);
+
+            if (!exists)
+            {
+                var placeholderCreditCard = new CreditCard
+                {
+                    UserId = request.UserId,
+                    CreditCardProductId = 1, // safe fallback, must exist!
+                    CardNumber = placeholderCardNumber,
+                    Nickname = placeholderNickname,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _db.CreditCards.Add(placeholderCreditCard);
+            }
+
+
+
             await _db.SaveChangesAsync();
 
             return Ok(new

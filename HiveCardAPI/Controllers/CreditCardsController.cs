@@ -1,4 +1,5 @@
 ﻿using HiveCardAPI.Data;
+using HiveCardAPI.Dtos;
 using HiveCardAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +16,57 @@ namespace HiveCardAPI.Controllers
         {
             _context = context;
         }
+
+
+
+        // POST: api/CreditCards
+        //[HttpPost]
+        //public async Task<IActionResult> CreateCreditCard([FromBody] CreditCardDto creditCardDto)
+        //{
+        //    if (creditCardDto == null)
+        //        return BadRequest("Invalid payload.");
+
+        //    if (string.IsNullOrWhiteSpace(creditCardDto.CardNumber))
+        //        return BadRequest("CardNumber cannot be empty.");
+
+        //    var creditCardProductId = creditCardDto.CreditCardProductId;
+
+        //    if (creditCardProductId == null || creditCardProductId <= 0)
+        //    {
+        //        creditCardProductId = 1; // 👈 use a safe fallback valid ID that you know exists
+        //    }
+
+
+        //    //// ✅ Validate the linked CreditCardProduct exists
+        //    //var productExists = await _context.CreditCardProducts
+        //    //    .AnyAsync(p => p.Id == creditCardDto.CreditCardProductId);
+
+        //    //if (!productExists)
+        //    //    return BadRequest($"Invalid CreditCardProductId: {creditCardDto.CreditCardProductId}");
+
+        //    // ✅ Check if this UserId + CardNumber pair already exists
+        //    var exists = await _context.CreditCards
+        //        .AnyAsync(c => c.UserId == creditCardDto.UserId && c.CardNumber == creditCardDto.CardNumber);
+
+        //    if (exists)
+        //        return Conflict($"A credit card with this type already exists for UserId {creditCardDto.UserId}.");
+
+        //    var newCard = new CreditCard
+        //    {
+        //        UserId = creditCardDto.UserId,
+        //        CreditCardProductId = creditCardProductId,
+        //        CardNumber = creditCardDto.CardNumber.Trim(),
+        //        Nickname = "extracting text (10+ mins)",
+        //        CreatedAt = DateTime.UtcNow
+        //    };
+
+        //    _context.CreditCards.Add(newCard);
+        //    await _context.SaveChangesAsync();
+
+        //    return CreatedAtAction(nameof(GetByUserId), new { userId = newCard.UserId }, newCard);
+        //}
+
+
 
         // GET: api/CreditCards/user/{userId}
         [HttpGet("user/{userId:int}")]
@@ -63,10 +115,37 @@ namespace HiveCardAPI.Controllers
             if (card == null)
                 return NotFound($"CreditCard with CardNumber '{cardNumber}' for UserId {userId} not found.");
 
+
+            // ✅ Load all Statements for this card
+            var statements = await _context.Statements
+                .Where(s => s.CreditCardId == card.CardNumber)
+                .ToListAsync();
+
+            foreach (var statement in statements)
+            {
+                // ✅ Load TransactionDetails for this Statement
+                var transactions = await _context.TransactionDetail
+                    .Where(td => td.StatementId == statement.Id)
+                    .ToListAsync();
+
+                // ✅ Remove TransactionDetails
+                _context.TransactionDetail.RemoveRange(transactions);
+            }
+
+            // ✅ Remove Statements
+            _context.Statements.RemoveRange(statements);
+
+            // ✅ Remove the CreditCard
             _context.CreditCards.Remove(card);
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "CreditCard deleted successfully.", card.Id, card.CardNumber });
+            return Ok(new 
+            { 
+                message = "CreditCard deleted successfully.", 
+                card.Id, 
+                card.CardNumber,
+                deletedStatements = statements.Count
+            });
         }
 
         // DELETE: api/CreditCards/by-user/{userId}
